@@ -52,6 +52,7 @@ dependencies:
   share_plus: ^10.1.4
   intl: ^0.20.2
   connectivity_plus: ^7.0.0
+  chewie: ^1.13.0
 
 dev_dependencies:
   flutter_test:

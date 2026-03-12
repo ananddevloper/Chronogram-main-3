@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:chronogram/app_helper/constent.dart';
 import 'package:chronogram/app_helper/device_helper/device_helper.dart';
 import 'package:chronogram/modal/user_detail_modal.dart';
@@ -10,14 +11,18 @@ class ApiService {
   static final api = ApiClient();
 
   /// ================== ERROR SANITIZATION ==================
-  static Map<String, dynamic> _cleanMap(Map<String, dynamic> map, {int? statusCode}) {
+  static Map<String, dynamic> _cleanMap(
+    Map<String, dynamic> map, {
+    int? statusCode,
+  }) {
     // Handle Network Errors from ApiClient
     if (map.containsKey('isNetworkError') && map['isNetworkError'] == true) {
-      return map; 
+      return map;
     }
     // Handle 429 Too Many Requests
     if (statusCode == 429) {
-      String blockMsg = "You have made too many requests. Please wait and try again later.";
+      String blockMsg =
+          "You have made too many requests. Please wait and try again later.";
       if (map.containsKey('error') && map['error'] != null) {
         String errMsg = map['error'].toString();
         if (!errMsg.startsWith('uri=') && !errMsg.startsWith('path=')) {
@@ -27,11 +32,13 @@ class ApiService {
       if (map.containsKey('message') && map['message'] != null) {
         String msg = map['message'].toString();
         if (msg.startsWith('uri=') || msg.startsWith('path=')) {
-           if (msg.contains('send-otp')) {
-             blockMsg = blockMsg.contains("wait") ? blockMsg : "OTP already sent. Please wait or check your messages.";
-           }
+          if (msg.contains('send-otp')) {
+            blockMsg = blockMsg.contains("wait")
+                ? blockMsg
+                : "OTP already sent. Please wait or check your messages.";
+          }
         } else {
-           blockMsg = msg;
+          blockMsg = msg;
         }
       }
       return {"message": blockMsg, "isBlocked": true, "error": blockMsg};
@@ -39,7 +46,7 @@ class ApiService {
     // Spring Boot technical message handling
     if (map.containsKey('error') && map['error'] != null) {
       String errMsg = map['error'].toString();
-      
+
       // Clean up common technical patterns
       if (errMsg.contains("INVALID_OTP_SESSION")) {
         map['message'] = "OTP session expired. Please request a new OTP.";
@@ -54,16 +61,17 @@ class ApiService {
 
     if (map.containsKey('message') && map['message'] != null) {
       String msg = map['message'].toString();
-      
+
       if (msg.startsWith('uri=') || msg.startsWith('path=')) {
         if (msg.contains('send-otp')) {
-          map['message'] = "OTP already sent. Please wait or check your messages.";
+          map['message'] =
+              "OTP already sent. Please wait or check your messages.";
         } else if (msg.contains('verify-otp')) {
           map['message'] = "Invalid or expired OTP session.";
         } else if (msg.contains('verify-email')) {
           map['message'] = "Email verification session failed. Please resend.";
         } else {
-          map['message'] = "Action failed. Please try again."; 
+          map['message'] = "Action failed. Please try again.";
         }
       } else if (msg.contains("INVALID_OTP_SESSION")) {
         map['message'] = "Session expired. Please request a new OTP.";
@@ -79,25 +87,31 @@ class ApiService {
         }
       }
     }
-    
+
     return map;
   }
 
   static Map<String, dynamic> _parseData(dynamic data, {int? statusCode}) {
     Map<String, dynamic> resultMap = {};
-    
+
     if (data == null) {
       resultMap = {};
     } else if (data is Map<String, dynamic>) {
       resultMap = _cleanMap(data, statusCode: statusCode);
     } else if (data is Map) {
-      resultMap = _cleanMap(Map<String, dynamic>.from(data), statusCode: statusCode);
+      resultMap = _cleanMap(
+        Map<String, dynamic>.from(data),
+        statusCode: statusCode,
+      );
     } else if (data is String) {
       if (data.isNotEmpty) {
         try {
           final decoded = jsonDecode(data);
           if (decoded is Map) {
-            resultMap = _cleanMap(Map<String, dynamic>.from(decoded), statusCode: statusCode);
+            resultMap = _cleanMap(
+              Map<String, dynamic>.from(decoded),
+              statusCode: statusCode,
+            );
           } else {
             resultMap = {"message": data};
           }
@@ -113,13 +127,15 @@ class ApiService {
       String strData = data.toString();
       final exceptionMatch = RegExp(r'Exception: (.*)').firstMatch(strData);
       if (exceptionMatch != null) {
-          String match = exceptionMatch.group(1) ?? "";
-          if (match.endsWith("]")) match = match.substring(0, match.length - 1);
-          resultMap = {"message": match.trim()};
+        String match = exceptionMatch.group(1) ?? "";
+        if (match.endsWith("]")) match = match.substring(0, match.length - 1);
+        resultMap = {"message": match.trim()};
       } else if (strData.contains("url=") || strData.contains("path=")) {
-         final match = RegExp(r'message=([^,]+)').firstMatch(strData);
-         if (match != null) resultMap = {"message": match.group(1)};
-         else resultMap = {"message": "Action failed. Please try again."};
+        final match = RegExp(r'message=([^,]+)').firstMatch(strData);
+        if (match != null)
+          resultMap = {"message": match.group(1)};
+        else
+          resultMap = {"message": "Action failed. Please try again."};
       } else {
         resultMap = {"message": strData};
       }
@@ -137,8 +153,11 @@ class ApiService {
     try {
       const String url = "auth/register/send-otp";
       final device = await DeviceHelper.getDeviceData();
-      final response = await api.post(url, data: {"mobileNumber": mobile, "deviceId": device["deviceId"]});
-      
+      final response = await api.post(
+        url,
+        data: {"mobileNumber": mobile, "deviceId": device["deviceId"]},
+      );
+
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["otpSessionToken"] != null) {
@@ -152,18 +171,24 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> verifyOtp({required String mobile, required String otp}) async {
+  static Future<Map<String, dynamic>?> verifyOtp({
+    required String mobile,
+    required String otp,
+  }) async {
     try {
       const url = "auth/verify-otp";
       final device = await DeviceHelper.getDeviceData();
       final otpSessionToken = await TokenHelper.getOtpSessionToken();
 
-      final response = await api.post(url, data: {
-        "mobileNumber": mobile, 
-        "otpCode": otp, 
-        "otpSessionToken": otpSessionToken,
-        ...device
-      });
+      final response = await api.post(
+        url,
+        data: {
+          "mobileNumber": mobile,
+          "otpCode": otp,
+          "otpSessionToken": otpSessionToken,
+          ...device,
+        },
+      );
 
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
@@ -178,16 +203,21 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> sendEmailOtp({required String email}) async {
+  static Future<Map<String, dynamic>> sendEmailOtp({
+    required String email,
+  }) async {
     try {
       const url = "auth/send-email-otp";
       String? regToken = await TokenHelper.getRegistrationToken();
       final device = await DeviceHelper.getDeviceData();
-      final response = await api.post(url, data: {
-        "email": email, 
-        "registrationToken": regToken,
-        "deviceId": device["deviceId"],
-      });
+      final response = await api.post(
+        url,
+        data: {
+          "email": email,
+          "registrationToken": regToken,
+          "deviceId": device["deviceId"],
+        },
+      );
 
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
@@ -202,23 +232,24 @@ class ApiService {
     }
   }
 
-
-  static Future<Map<String, dynamic>?> verifyEmailOtp({required String email, required String otp}) async {
+  static Future<Map<String, dynamic>?> verifyEmailOtp({
+    required String email,
+    required String otp,
+  }) async {
     try {
       String? regToken = await TokenHelper.getRegistrationToken();
       const url = "auth/verify-email-registration-otp";
-      final response = await api.post(url, data: {
-        "email": email,
-        "otpCode": otp,
-        "registrationToken": regToken,
-      });
+      final response = await api.post(
+        url,
+        data: {"email": email, "otpCode": otp, "registrationToken": regToken},
+      );
 
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
-         if (data["accessToken"] != null) {
-           await TokenHelper.saveRegistrationToken(data["accessToken"]);
-         }
-         data["status"] = "success";
+        if (data["accessToken"] != null) {
+          await TokenHelper.saveRegistrationToken(data["accessToken"]);
+        }
+        data["status"] = "success";
       }
       return data;
     } catch (e) {
@@ -226,23 +257,32 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> completeProfile({required String name, required String dob, required String mobile}) async {
+  static Future<Map<String, dynamic>?> completeProfile({
+    required String name,
+    required String dob,
+    required String mobile,
+  }) async {
     try {
       const url = "auth/complete-profile";
       String? regToken = await TokenHelper.getRegistrationToken();
       final device = await DeviceHelper.getDeviceData();
-      final response = await api.post(url, data: {
-        "name": name,
-        "dob": dob,
-        "mobileNumber": mobile,
-        "registrationToken": regToken,
-        ...device,
-      });
+      final response = await api.post(
+        url,
+        data: {
+          "name": name,
+          "dob": dob,
+          "mobileNumber": mobile,
+          "registrationToken": regToken,
+          ...device,
+        },
+      );
 
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
-        if (data["accessToken"] != null) await TokenHelper.saveToken(data["accessToken"]);
-        if (data["refreshToken"] != null) await TokenHelper.saveRefreshToken(data["refreshToken"]);
+        if (data["accessToken"] != null)
+          await TokenHelper.saveToken(data["accessToken"]);
+        if (data["refreshToken"] != null)
+          await TokenHelper.saveRefreshToken(data["refreshToken"]);
         data["status"] = "success";
       }
       return data;
@@ -257,8 +297,11 @@ class ApiService {
     try {
       const url = "auth/login/send-otp";
       final device = await DeviceHelper.getDeviceData();
-      final response = await api.post(url, data: {"mobileNumber": mobile, "deviceId": device["deviceId"]});
-      
+      final response = await api.post(
+        url,
+        data: {"mobileNumber": mobile, "deviceId": device["deviceId"]},
+      );
+
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["otpSessionToken"] != null) {
@@ -272,23 +315,31 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> verifyLoginOtp({required String mobile, required String otp}) async {
+  static Future<Map<String, dynamic>> verifyLoginOtp({
+    required String mobile,
+    required String otp,
+  }) async {
     try {
       const url = "auth/verify-login-otp";
       final device = await DeviceHelper.getDeviceData();
       final otpSessionToken = await TokenHelper.getOtpSessionToken();
 
-      final response = await api.post(url, data: {
-        "mobileNumber": mobile, 
-        "otpCode": otp, 
-        "otpSessionToken": otpSessionToken,
-        ...device
-      });
+      final response = await api.post(
+        url,
+        data: {
+          "mobileNumber": mobile,
+          "otpCode": otp,
+          "otpSessionToken": otpSessionToken,
+          ...device,
+        },
+      );
 
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
-        if (data["accessToken"] != null) await TokenHelper.saveToken(data["accessToken"]);
-        if (data["refreshToken"] != null) await TokenHelper.saveRefreshToken(data["refreshToken"]);
+        if (data["accessToken"] != null)
+          await TokenHelper.saveToken(data["accessToken"]);
+        if (data["refreshToken"] != null)
+          await TokenHelper.saveRefreshToken(data["refreshToken"]);
         return {"status": "success", "token": data["accessToken"]};
       } else if (response.statusCode == 401) {
         return {
@@ -303,21 +354,30 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> verifyNewDeviceEmailOtp({required String mobile, required String otp, required String temporaryToken}) async {
+  static Future<Map<String, dynamic>> verifyNewDeviceEmailOtp({
+    required String mobile,
+    required String otp,
+    required String temporaryToken,
+  }) async {
     try {
       const url = "auth/verify-new-device";
       final device = await DeviceHelper.getDeviceData();
-      final response = await api.post(url, data: {
-        "mobileNumber": mobile,
-        "otp": otp,
-        "temporaryToken": temporaryToken,
-        ...device,
-      });
+      final response = await api.post(
+        url,
+        data: {
+          "mobileNumber": mobile,
+          "otp": otp,
+          "temporaryToken": temporaryToken,
+          ...device,
+        },
+      );
 
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
-        if (data["accessToken"] != null) await TokenHelper.saveToken(data["accessToken"]);
-        if (data["refreshToken"] != null) await TokenHelper.saveRefreshToken(data["refreshToken"]);
+        if (data["accessToken"] != null)
+          await TokenHelper.saveToken(data["accessToken"]);
+        if (data["refreshToken"] != null)
+          await TokenHelper.saveRefreshToken(data["refreshToken"]);
         return {"status": "success", "token": data["accessToken"]};
       }
       return data;
@@ -328,25 +388,26 @@ class ApiService {
 
   /// ================== RESEND ENDPOINTS ==================
 
-  static Future<Map<String, dynamic>> resendOtp({String? mobile, String? email}) async {
+  static Future<Map<String, dynamic>> resendOtp({
+    String? mobile,
+    String? email,
+  }) async {
     try {
       const String url = "auth/register/resend-otp";
       final device = await DeviceHelper.getDeviceData();
-      
+
       Map<String, dynamic> body = email != null
           ? {
               "email": email,
               "registrationToken": await TokenHelper.getRegistrationToken(),
-              "deviceId": device["deviceId"]
+              "deviceId": device["deviceId"],
             }
-          : {
-              "mobileNumber": mobile, 
-              "deviceId": device["deviceId"]
-            };
+          : {"mobileNumber": mobile, "deviceId": device["deviceId"]};
 
       final response = await api.post(url, data: body);
+
       final data = _parseData(response.data, statusCode: response.statusCode);
-      
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Backend guide states resending an OTP invalidates the previous token.
         // We MUST save the new one immediately to keep the session in sync.
@@ -368,7 +429,9 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> resendRegistrationEmailOtp({required String email}) async {
+  static Future<Map<String, dynamic>> resendRegistrationEmailOtp({
+    required String email,
+  }) async {
     return await resendOtp(email: email);
   }
 
@@ -376,8 +439,11 @@ class ApiService {
     try {
       final device = await DeviceHelper.getDeviceData();
       const String url = "auth/login/resend-otp";
-      final response = await api.post(url, data: {"mobileNumber": mobile, "deviceId": device["deviceId"]});
-      
+      final response = await api.post(
+        url,
+        data: {"mobileNumber": mobile, "deviceId": device["deviceId"]},
+      );
+
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["otpSessionToken"] != null) {
@@ -394,9 +460,12 @@ class ApiService {
   static Future<bool> resendNewDeviceOtp(String temporaryToken) async {
     try {
       const url = "auth/resend-new-device-otp";
-      final response = await api.post(url, data: {"temporaryToken": temporaryToken});
+      final response = await api.post(
+        url,
+        data: {"temporaryToken": temporaryToken},
+      );
       final data = _parseData(response.data, statusCode: response.statusCode);
-      
+
       if (response.statusCode == 200) {
         // Handle any tokens if returned
         return true;
@@ -413,13 +482,17 @@ class ApiService {
     try {
       final response = await api.get("auth/me");
       if (response.statusCode == 200) {
-        return UserDetailModal.fromJson(_parseData(response.data, statusCode: response.statusCode));
+        return UserDetailModal.fromJson(
+          _parseData(response.data, statusCode: response.statusCode),
+        );
       }
       throw Exception(response.data);
     } catch (e) {
       rethrow;
     }
   }
+
+  /// ===== Logout =====
 
   static Future<bool> logout() async {
     try {
@@ -432,17 +505,15 @@ class ApiService {
       }
 
       const String url = "auth/logout";
-      
+
       // Use dio directly with queryParameters to ensure JWT chars (+, /, .) are URL-encoded.
       // The backend @RequestParam expects encoded dots/chars in the URL.
       await api.dio.post(
         url,
         queryParameters: {"refreshToken": refreshToken},
-        options: Options(
-          headers: {"Authorization": "Bearer $token"}
-        ),
+        options: Options(headers: {"Authorization": "Bearer $token"}),
       );
-      
+
       await TokenHelper.clear();
       return true;
     } catch (e) {
@@ -450,6 +521,26 @@ class ApiService {
       return true;
     }
   }
+
+  /// ======  Profile Photo ======
+
+  static Future<Map<String, dynamic>> uploadProfilePhoto(File imageFile) async {
+    try {
+      String url = 'profile/photo';
+      FormData formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: imageFile.path.split('/').last,
+        ),
+      });
+      final response = await api.post(url, data: formData);
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        return {'status': 'status', 'photoUrl': data['photoUrl']};
+      }
+      return data;
+    } catch (e) {
+      return {'error': Constent.sometingWntWrong};
+    }
+  }
 }
-
-

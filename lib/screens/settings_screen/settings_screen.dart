@@ -18,7 +18,6 @@ class SettingsScreen extends StatelessWidget {
   final String userName;
 
   const SettingsScreen({super.key, this.user, required this.userName});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,7 +37,6 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-
               /// Profile Header
               _SmoothClick(
                 onTap: () {

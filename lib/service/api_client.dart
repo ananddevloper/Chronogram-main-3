@@ -94,6 +94,7 @@ class ApiClient {
   }
 
   /// ================== GET ==================
+  
   Future<Response> get(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -139,6 +140,7 @@ class ApiClient {
   }
 
   /// ================== DELETE ==================
+  
   Future<Response> delete(String path, {dynamic data}) async {
     try {
       final response = await dio.delete(path, data: data);

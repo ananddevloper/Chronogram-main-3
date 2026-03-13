@@ -543,4 +543,42 @@ class ApiService {
       return {'error': Constent.sometingWntWrong};
     }
   }
+
+
+// ============================================================
+// STORAGE APIs
+// ============================================================
+
+/// Storage usage fetch karo (used vs limit)
+static Future<Map<String, dynamic>> getStorageUsage() async {
+  try {
+    final response = await api.get("storage/usage");
+    final data = _parseData(response.data, statusCode: response.statusCode);
+    if (response.statusCode == 200) {
+      return {"status": "success", ...data};
+    }
+    return data;
+  } catch (e) {
+    return {"error": Constent.sometingWntWrong};
+  }
 }
+
+/// Storage breakdown fetch karo (photos vs videos alag alag)
+static Future<Map<String, dynamic>> getStorageDetails() async {
+  try {
+    final response = await api.get("storage/details");
+    final data = _parseData(response.data, statusCode: response.statusCode);
+    if (response.statusCode == 200) {
+      return {"status": "success", ...data};
+    }
+    return data;
+  } catch (e) {
+    return {"error": Constent.sometingWntWrong};
+  }
+}
+
+
+}
+
+
+

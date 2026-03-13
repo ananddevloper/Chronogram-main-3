@@ -13,11 +13,24 @@ import 'package:chronogram/screens/login/login_provider/login_screen_provider.da
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_screen_provider.dart';
 import 'package:chronogram/modal/user_detail_modal.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   final UserDetailModal? user;
   final String userName;
-
   const SettingsScreen({super.key, this.user, required this.userName});
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  double used = 0, limit = 10;
+  bool storageLoading = true;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _loadStorageUsage();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,13 +50,17 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
+
               /// Profile Header
               _SmoothClick(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ViewProfileScreen(user: user, userName: userName),
+                      builder: (_) => ViewProfileScreen(
+                        user: widget.user,
+                        userName: widget.userName,
+                      ),
                     ),
                   );
                 },
@@ -64,7 +81,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          _getInitials(userName),
+                          _getInitials(widget.userName),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -79,7 +96,7 @@ class SettingsScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            userName,
+                            widget.userName,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -88,21 +105,33 @@ class SettingsScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            user?.email != null ? _maskEmail(user!.email!) : "tap to view profile",
+                            widget.user?.email != null
+                                ? _maskEmail(widget.user!.email!)
+                                : "tap to view profile",
                             style: const TextStyle(
                               color: Colors.white60,
                               fontSize: 13,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Row(children: [
-                            const Text(
-                              "View Profile",
-                              style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(width: 3),
-                            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.orange, size: 10),
-                          ]),
+                          Row(
+                            children: [
+                              const Text(
+                                "View Profile",
+                                style: TextStyle(
+                                  color: Colors.orange,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 3),
+                              const Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                color: Colors.orange,
+                                size: 10,
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -111,7 +140,6 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 35),
-
               /// STORAGE SECTION
               _buildSectionTitle("STORAGE"),
               const SizedBox(height: 15),
@@ -125,7 +153,7 @@ class SettingsScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: const Color(0xff121212),
+                    color: const Color.fromARGB(255, 80, 75, 75),
                     borderRadius: BorderRadius.circular(15),
                     border: Border.all(color: Colors.white12),
                   ),
@@ -137,7 +165,10 @@ class SettingsScreen extends StatelessWidget {
                           color: const Color(0xff3B260D),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.sd_storage_outlined, color: Colors.orange),
+                        child: const Icon(
+                          Icons.sd_storage_outlined,
+                          color: Colors.orange,
+                        ),
                       ),
                       const SizedBox(width: 15),
                       Expanded(
@@ -153,10 +184,22 @@ class SettingsScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 5),
-                            const Text(
-                              "6.8 GB of 10 GB used",
-                              style: TextStyle(color: Colors.white60, fontSize: 13),
-                            ),
+                            // Dynamic text
+                            storageLoading
+                                ? const Text(
+                                    "Loading...",
+                                    style: TextStyle(
+                                      color: Colors.white60,
+                                      fontSize: 13,
+                                    ),
+                                  )
+                                : Text(
+                                    '${used.toStringAsFixed(1)} GB of ${limit.toStringAsFixed(0)} GB used',
+                                    style: TextStyle(
+                                      color: Colors.white60,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                             const SizedBox(height: 10),
                             Stack(
                               children: [
@@ -167,16 +210,21 @@ class SettingsScreen extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(5),
                                   ),
                                 ),
-                                FractionallySizedBox(
-                                  widthFactor: 0.68,
-                                  child: Container(
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: Colors.orange,
-                                      borderRadius: BorderRadius.circular(5),
+                                // Dynamic progress bar
+                                if (!storageLoading)
+                                  FractionallySizedBox(
+                                    widthFactor: (used / limit).clamp(0.0, 1.0),
+                                    child: Container(
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        // Warning pe red , normal pe orange
+                                        color: (used / limit) >= 0.9
+                                            ? Colors.redAccent
+                                            : Colors.orange,
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
                                     ),
                                   ),
-                                ),
                               ],
                             ),
                           ],
@@ -207,7 +255,10 @@ class SettingsScreen extends StatelessWidget {
                       title: "Wi-Fi Only",
                       subtitle: "Sync only when connected to Wi-Fi",
                       iconBg: const Color(0xff3B260D),
-                      trailing: const Icon(Icons.radio_button_checked, color: Colors.orange),
+                      trailing: const Icon(
+                        Icons.radio_button_checked,
+                        color: Colors.orange,
+                      ),
                     ),
                     const Divider(color: Colors.white12, height: 1),
                     _buildSyncPreference(
@@ -215,7 +266,10 @@ class SettingsScreen extends StatelessWidget {
                       title: "Mobile Network",
                       subtitle: "Sync using mobile data (may incur charges)",
                       iconBg: Colors.white10,
-                      trailing: const Icon(Icons.radio_button_off, color: Colors.white38),
+                      trailing: const Icon(
+                        Icons.radio_button_off,
+                        color: Colors.white38,
+                      ),
                     ),
                   ],
                 ),
@@ -234,21 +288,57 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _buildListTile(Icons.notifications_none, "Notifications", onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
-                    }),
+                    _buildListTile(
+                      Icons.notifications_none,
+                      "Notifications",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        );
+                      },
+                    ),
                     const Divider(color: Colors.white12, height: 1),
-                    _buildListTile(Icons.shield_outlined, "Privacy & Security", onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacySecurityScreen()));
-                    }),
+                    _buildListTile(
+                      Icons.shield_outlined,
+                      "Privacy & Security",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PrivacySecurityScreen(),
+                          ),
+                        );
+                      },
+                    ),
                     const Divider(color: Colors.white12, height: 1),
-                    _buildListTile(Icons.help_outline, "Help & Support", onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
-                    }),
+                    _buildListTile(
+                      Icons.help_outline,
+                      "Help & Support",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HelpSupportScreen(),
+                          ),
+                        );
+                      },
+                    ),
                     const Divider(color: Colors.white12, height: 1),
-                    _buildListTile(Icons.info_outline, "About", onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen()));
-                    }),
+                    _buildListTile(
+                      Icons.info_outline,
+                      "About",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AboutScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -264,8 +354,16 @@ class SettingsScreen extends StatelessWidget {
                     barrierDismissible: false,
                     builder: (ctx) => AlertDialog(
                       backgroundColor: const Color(0xff1A1A1A),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      title: const Text("Log Out?", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      title: const Text(
+                        "Log Out?",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       content: const Text(
                         "Are you sure you want to log out of your account?",
                         style: TextStyle(color: Colors.white60, fontSize: 14),
@@ -273,15 +371,23 @@ class SettingsScreen extends StatelessWidget {
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text("Cancel", style: TextStyle(color: Colors.white54)),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(color: Colors.white54),
+                          ),
                         ),
                         ElevatedButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.redAccent,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          child: const Text("Yes, Logout", style: TextStyle(color: Colors.white)),
+                          child: const Text(
+                            "Yes, Logout",
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ],
                     ),
@@ -322,7 +428,6 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 40),
             ],
           ),
@@ -346,7 +451,10 @@ class SettingsScreen extends StatelessWidget {
     if (namePart.length <= 2) {
       return email;
     }
-    String maskedName = namePart.substring(0, 2) + '*' * (namePart.length - 2) + namePart.substring(namePart.length - 1);
+    String maskedName =
+        namePart.substring(0, 2) +
+        '*' * (namePart.length - 2) +
+        namePart.substring(namePart.length - 1);
     return '$maskedName@$domainPart';
   }
 
@@ -387,7 +495,11 @@ class SettingsScreen extends StatelessWidget {
               color: iconBg,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: iconBg == Colors.white10 ? Colors.white54 : Colors.orange, size: 20),
+            child: Icon(
+              icon,
+              color: iconBg == Colors.white10 ? Colors.white54 : Colors.orange,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 15),
           Expanded(
@@ -448,6 +560,17 @@ class SettingsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _loadStorageUsage() async {
+    final result = await ApiService.getStorageUsage();
+    if (result["status"] == "success") {
+      setState(() {
+        used = (result["used"] as num).toDouble();
+        limit = (result["limit"] as num).toDouble();
+      });
+    }
+    setState(() => storageLoading = false);
   }
 }
 

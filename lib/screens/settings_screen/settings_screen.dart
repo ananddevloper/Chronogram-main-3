@@ -791,6 +791,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
               ),
+              
               const SizedBox(height: 35),
 
               /// STORAGE SECTION

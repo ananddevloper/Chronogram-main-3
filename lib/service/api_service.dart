@@ -563,6 +563,7 @@ class ApiService {
   }
 
   /// Storage breakdown fetch karo (photos vs videos alag alag)
+  
   static Future<Map<String, dynamic>> getStorageDetails() async {
     try {
       final response = await api.get("storage/details");
@@ -592,6 +593,7 @@ class ApiService {
   }
 
 static Future<Map<String,dynamic>> updateSyncPreference(String mode)async{
+  
   try{
     final response = await api.put('settings/sync', data: {'mode':mode});
     final data = _parseData(response.data,statusCode: response.statusCode);
@@ -602,9 +604,7 @@ static Future<Map<String,dynamic>> updateSyncPreference(String mode)async{
   }catch(e){
     return {'error': Constent.sometingWntWrong};
   }
+
 }
-
-
-
 
 }

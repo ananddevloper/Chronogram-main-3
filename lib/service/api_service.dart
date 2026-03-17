@@ -11,6 +11,7 @@ class ApiService {
   static final api = ApiClient();
 
   /// ================== ERROR SANITIZATION ==================
+
   static Map<String, dynamic> _cleanMap(
     Map<String, dynamic> map, {
     int? statusCode,
@@ -19,6 +20,7 @@ class ApiService {
     if (map.containsKey('isNetworkError') && map['isNetworkError'] == true) {
       return map;
     }
+
     // Handle 429 Too Many Requests
     if (statusCode == 429) {
       String blockMsg =
@@ -29,6 +31,7 @@ class ApiService {
           blockMsg = errMsg;
         }
       }
+
       if (map.containsKey('message') && map['message'] != null) {
         String msg = map['message'].toString();
         if (msg.startsWith('uri=') || msg.startsWith('path=')) {
@@ -93,7 +96,6 @@ class ApiService {
 
   static Map<String, dynamic> _parseData(dynamic data, {int? statusCode}) {
     Map<String, dynamic> resultMap = {};
-
     if (data == null) {
       resultMap = {};
     } else if (data is Map<String, dynamic>) {
@@ -140,7 +142,6 @@ class ApiService {
         resultMap = {"message": strData};
       }
     }
-
     if (statusCode != null) {
       resultMap['statusCode'] = statusCode;
     }
@@ -157,7 +158,6 @@ class ApiService {
         url,
         data: {"mobileNumber": mobile, "deviceId": device["deviceId"]},
       );
-
       final data = _parseData(response.data, statusCode: response.statusCode);
       if (response.statusCode == 200) {
         if (data["otpSessionToken"] != null) {
@@ -544,41 +544,67 @@ class ApiService {
     }
   }
 
+  // ============================================================
+  // STORAGE APIs
+  // ============================================================
 
-// ============================================================
-// STORAGE APIs
-// ============================================================
+  /// Storage usage fetch karo (used vs limit)
+  static Future<Map<String, dynamic>> getStorageUsage() async {
+    try {
+      final response = await api.get("storage/usage");
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        return {"status": "success", ...data};
+      }
+      return data;
+    } catch (e) {
+      return {"error": Constent.sometingWntWrong};
+    }
+  }
 
-/// Storage usage fetch karo (used vs limit)
-static Future<Map<String, dynamic>> getStorageUsage() async {
-  try {
-    final response = await api.get("storage/usage");
-    final data = _parseData(response.data, statusCode: response.statusCode);
-    if (response.statusCode == 200) {
-      return {"status": "success", ...data};
+  /// Storage breakdown fetch karo (photos vs videos alag alag)
+  static Future<Map<String, dynamic>> getStorageDetails() async {
+    try {
+      final response = await api.get("storage/details");
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        return {"status": "success", ...data};
+      }
+      return data;
+    } catch (e) {
+      return {"error": Constent.sometingWntWrong};
+    }
+  }
+
+  /// ====== SETTINGS APIs =======
+
+  static Future<Map<String, dynamic>> getSyncPreference() async {
+    try {
+      final response = await api.get('settings/sync');
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        return {'status': 'success', ...data};
+      }
+      return data;
+    } catch (e) {
+      return {'error': Constent.sometingWntWrong};
+    }
+  }
+
+static Future<Map<String,dynamic>> updateSyncPreference(String mode)async{
+  try{
+    final response = await api.put('settings/sync', data: {'mode':mode});
+    final data = _parseData(response.data,statusCode: response.statusCode);
+    if(response.statusCode == 200){
+      return {'status': 'success', ...data };
     }
     return data;
-  } catch (e) {
-    return {"error": Constent.sometingWntWrong};
+  }catch(e){
+    return {'error': Constent.sometingWntWrong};
   }
 }
 
-/// Storage breakdown fetch karo (photos vs videos alag alag)
-static Future<Map<String, dynamic>> getStorageDetails() async {
-  try {
-    final response = await api.get("storage/details");
-    final data = _parseData(response.data, statusCode: response.statusCode);
-    if (response.statusCode == 200) {
-      return {"status": "success", ...data};
-    }
-    return data;
-  } catch (e) {
-    return {"error": Constent.sometingWntWrong};
-  }
-}
+
 
 
 }
-
-
-

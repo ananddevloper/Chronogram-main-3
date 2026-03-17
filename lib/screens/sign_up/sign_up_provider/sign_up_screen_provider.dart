@@ -196,7 +196,6 @@ class SignUpScreenProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final result = await ApiService.sendOtp(mobile);
-
     if (result["status"] != "success") {
       String errorMessage = result['error'] ?? result['message'] ?? "";
       String lowerError = errorMessage.toLowerCase();
@@ -208,12 +207,11 @@ class SignUpScreenProvider extends ChangeNotifier {
         showErrorTemporarily(errorMessage);
         return "error";
       }
-
+      
       // RATE LIMIT / COOLDOWN BYPASS
       if (result['isAlreadySent'] == true || 
           lowerError.contains("wait") || 
-          lowerError.contains("active")) {
-        
+          lowerError.contains("active")) {        
         final RegExp regex = RegExp(r'wait (\d+)');
         final match = regex.firstMatch(errorMessage);
         if (match != null) {
@@ -260,4 +258,5 @@ class SignUpScreenProvider extends ChangeNotifier {
     isMobileValid = false;
     notifyListeners();
   }
+
 }

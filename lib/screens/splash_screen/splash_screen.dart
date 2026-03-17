@@ -259,8 +259,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             ),
           ),
 
-
           // ── Version ──
+
           Positioned(
             bottom: 36, left: 0, right: 0,
             child: Center(

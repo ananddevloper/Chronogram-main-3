@@ -195,7 +195,6 @@ void main() async {
 }
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
@@ -209,6 +208,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LoginMobileScreenProvider()),
         ChangeNotifierProvider(create: (_) => LoginMobileOtpScreenProvider()),
       ],
+
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Chronogram',
@@ -222,6 +222,7 @@ class MyApp extends StatelessWidget {
           return ConnectivityOverlay(child: child!);
         },
       ),
+
     );
   }
 }
@@ -229,7 +230,6 @@ class MyApp extends StatelessWidget {
 class ConnectivityOverlay extends StatefulWidget {
   final Widget child;
   const ConnectivityOverlay({super.key, required this.child});
-
   @override
   State<ConnectivityOverlay> createState() => _ConnectivityOverlayState();
 }
@@ -346,4 +346,5 @@ class _ConnectivityOverlayState extends State<ConnectivityOverlay> {
   Widget build(BuildContext context) {
     return widget.child;
   }
+  
 }

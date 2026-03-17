@@ -148,30 +148,30 @@ class _StorageScreenState extends State<StorageScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 30),
-
-                  /// Manage Storage Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xffFF8C00),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        "Manage Storage",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+                  // const SizedBox(height: 30),
+                  // /// Manage Storage Button
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   height: 55,
+                  //   child: ElevatedButton(
+                  //     onPressed: () {},
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: const Color(0xffFF8C00),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(12),
+                  //       ),
+                  //     ),
+                  //     child: const Text(
+                  //       "Manage Storage",
+                  //       style: TextStyle(
+                  //         color: Colors.white,
+                  //         fontSize: 16,
+                  //         fontWeight: FontWeight.bold,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+              
                 ],
               ),
             ),
@@ -236,6 +236,12 @@ class _StorageScreenState extends State<StorageScreen> {
     ]);
     final usage = results[0];
     final details = results[1];
+
+    ///// Debug 
+    
+  print("USAGE RESPONSE: $usage");
+  print("DETAILS RESPONSE: $details");
+
     setState(() {
       if (usage['status'] == 'success') {
         used = (usage['used'] as num).toDouble();

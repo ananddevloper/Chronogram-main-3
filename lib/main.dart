@@ -176,6 +176,7 @@
 // }
 
 
+import 'package:chronogram/screens/home_screen/photo_screen.dart';
 import 'package:chronogram/screens/login/login_provider/login_otp_provider.dart';
 import 'package:chronogram/screens/login/login_provider/login_screen_provider.dart';
 import 'package:chronogram/screens/sign_up/sign_up_provider/sign_up_email_otp_provider.dart';
@@ -336,6 +337,7 @@ class _ConnectivityOverlayState extends State<ConnectivityOverlay> {
     navigatorKey.currentState?.pushAndRemoveUntil(
       MaterialPageRoute(
         builder: (_) => const SplashScreen(),
+      //  PhotoScreen(),
         settings: const RouteSettings(name: "SplashScreen"),
       ),
       (route) => false,

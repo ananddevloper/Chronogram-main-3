@@ -6,9 +6,12 @@ import 'package:chronogram/modal/user_detail_modal.dart';
 import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
 import 'package:chronogram/service/api_client.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' hide MultipartFile, Response;
 
 class ApiService {
   static final api = ApiClient();
+  final ApiClient client = ApiClient();
 
   /// ================== ERROR SANITIZATION ==================
 
@@ -563,7 +566,7 @@ class ApiService {
   }
 
   /// Storage breakdown fetch karo (photos vs videos alag alag)
-  
+
   static Future<Map<String, dynamic>> getStorageDetails() async {
     try {
       final response = await api.get("storage/details");
@@ -592,19 +595,75 @@ class ApiService {
     }
   }
 
-static Future<Map<String,dynamic>> updateSyncPreference(String mode)async{
-  
-  try{
-    final response = await api.put('settings/sync', data: {'mode':mode});
-    final data = _parseData(response.data,statusCode: response.statusCode);
-    if(response.statusCode == 200){
-      return {'status': 'success', ...data };
+  static Future<Map<String, dynamic>> updateSyncPreference(String mode) async {
+    try {
+      final response = await api.put('settings/sync', data: {'mode': mode});
+      final data = _parseData(response.data, statusCode: response.statusCode);
+      if (response.statusCode == 200) {
+        return {'status': 'success', ...data};
+      }
+      return data;
+    } catch (e) {
+      return {'error': Constent.sometingWntWrong};
     }
-    return data;
-  }catch(e){
-    return {'error': Constent.sometingWntWrong};
   }
 
+  // ============= Image Service =================
+
+
+// ============= Image Service =================
+
+static Future<Map<String, dynamic>> uploadImages({
+  required List<File> imageFiles,
+  String type = 'personal',
+}) async {
+  try {
+    String url = 'images/bulk';
+
+    // Build multipart list — key must be 'files' (plural)
+    List<MultipartFile> multipartFiles = [];
+    for (final file in imageFiles) {
+      multipartFiles.add(
+        await MultipartFile.fromFile(
+          file.path,
+          filename: file.path.split('/').last,
+        ),
+      );
+    }
+
+    FormData formData = FormData.fromMap({
+      'files': multipartFiles,
+      'type': type,
+    });
+
+    final response = await api.post(url, data: formData);
+    final statusCode = response.statusCode;
+
+    // Success — response is a JSON array
+    if (statusCode == 200 || statusCode == 201) {
+      final rawData = response.data;
+
+      // Dio returns List directly for JSON arrays
+      if (rawData is List) {
+        return {
+          'status': 'success',
+          'images': rawData,
+        };
+      }
+
+      return {'status': 'success', 'images': []};
+    }
+
+    // Error — parse as map
+    final data = _parseData(response.data, statusCode: statusCode);
+    return data;
+  } catch (e) {
+    return {'error': Constent.sometingWntWrong};
+  }
 }
+
+  
+
+
 
 }

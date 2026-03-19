@@ -16,6 +16,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:provider/provider.dart';
 
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -24,7 +25,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-
   int currentIndex = 0;
   String userName = "Loading...";
   UserDetailModal? user;

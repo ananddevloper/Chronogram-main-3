@@ -1050,7 +1050,7 @@ class _VideoScreenState extends State<VideoScreen> with WidgetsBindingObserver {
           children: [
             _buildHeader(),
             const Divider(color: Colors.white12, height: 1),
-            _buildSubHeader(),
+            //   _buildSubHeader(),
             Expanded(
               child: _isLoading
                   ? const Center(
@@ -1264,25 +1264,25 @@ class _VideoScreenState extends State<VideoScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildSubHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-      child: Row(
-        children: const [
-          Icon(Icons.folder_open_outlined, color: Colors.orange, size: 20),
-          SizedBox(width: 10),
-          Text(
-            "Select Folder for Sync",
-            style: TextStyle(
-              color: Colors.orange,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildSubHeader() {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+  //     child: Row(
+  //       children: const [
+  //         Icon(Icons.folder_open_outlined, color: Colors.orange, size: 20),
+  //         SizedBox(width: 10),
+  //         Text(
+  //           "Select Folder for Sync",
+  //           style: TextStyle(
+  //             color: Colors.orange,
+  //             fontSize: 14,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildPermissionDeniedView() {
     return Center(
@@ -1790,7 +1790,6 @@ class _SingleVideoPlayerState extends State<_SingleVideoPlayer> {
                                   : Icons.play_arrow,
                               color: Colors.white,
                             ),
-
                           ),
                           Padding(
                             padding: const EdgeInsets.all(15),
@@ -1801,16 +1800,13 @@ class _SingleVideoPlayerState extends State<_SingleVideoPlayer> {
                                 ValueListenableBuilder(
                                   valueListenable: _controller!,
                                   builder: (context, value, child) {
-                                    return 
-                                    
-                                    Text(
+                                    return Text(
                                       _formatDuration(value.position.inSeconds),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
                                       ),
                                     );
-
                                   },
                                 ),
                                 Text(

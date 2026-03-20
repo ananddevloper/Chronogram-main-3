@@ -5,13 +5,16 @@ import 'package:chronogram/app_helper/device_helper/device_helper.dart';
 import 'package:chronogram/modal/user_detail_modal.dart';
 import 'package:chronogram/app_helper/token_saver_helper/token_saver_helper.dart';
 import 'package:chronogram/service/api_client.dart';
+import 'package:chronogram/service/image_api_client.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' hide MultipartFile, Response;
 
 class ApiService {
   static final api = ApiClient();
+  static final imageApi = ImageApiClient();
   final ApiClient client = ApiClient();
+  
 
   /// ================== ERROR SANITIZATION ==================
 
@@ -611,58 +614,90 @@ class ApiService {
   // ============= Image Service =================
 
 
-// ============= Image Service =================
-
-static Future<Map<String, dynamic>> uploadImages({
-  required List<File> imageFiles,
-  String type = 'personal',
-}) async {
-  try {
-    String url = 'images/bulk';
-
-    // Build multipart list — key must be 'files' (plural)
-    List<MultipartFile> multipartFiles = [];
-    for (final file in imageFiles) {
-      multipartFiles.add(
-        await MultipartFile.fromFile(
-          file.path,
-          filename: file.path.split('/').last,
-        ),
-      );
-    }
-
-    FormData formData = FormData.fromMap({
-      'files': multipartFiles,
-      'type': type,
-    });
-
-    final response = await api.post(url, data: formData);
-    final statusCode = response.statusCode;
-
-    // Success — response is a JSON array
-    if (statusCode == 200 || statusCode == 201) {
-      final rawData = response.data;
-
-      // Dio returns List directly for JSON arrays
-      if (rawData is List) {
+ // ================================================================
+  // IMAGE VAULT APIs  (Image Service - port 8084)
+  // ================================================================
+ 
+  /// Bulk upload — sirf unsync photos upload karta hai, 5-5 ke batches mein
+  static Future<Map<String, dynamic>> uploadImagesBulk({
+    required List<File> files,
+    String type = "personal",
+  }) async {
+    try {
+      const String url = "images/bulk";
+      print("=== UPLOAD START: ${files.length} files ===");
+ 
+      final List<MultipartFile> multipartFiles = [];
+      for (final file in files) {
+        try {
+          final filename = file.path.split('/').last;
+          final bool exists = await file.exists();
+          final int size = exists ? await file.length() : 0;
+          print("FILE: $filename | exists=$exists | size=$size bytes");
+          if (!exists || size == 0) { print("SKIP: $filename"); continue; }
+ 
+          String contentType = "image/jpeg";
+          final ext = filename.split('.').last.toLowerCase();
+          if (ext == "png")  contentType = "image/png";
+          else if (ext == "webp") contentType = "image/webp";
+          else if (ext == "gif")  contentType = "image/gif";
+          else if (ext == "heic" || ext == "heif") contentType = "image/heic";
+          else if (ext == "bmp" || ext == "dib") contentType = "image/bmp";
+          else if (ext == "tif" || ext == "tiff") contentType = "image/tiff";
+          else if (ext == "avif") contentType = "image/avif";
+ 
+          multipartFiles.add(await MultipartFile.fromFile(
+            file.path, filename: filename, contentType: DioMediaType.parse(contentType),
+          ));
+          print("ADDED: $filename ($contentType)");
+        } catch (fileErr) {
+          print("ERROR adding file ${file.path}: $fileErr");
+        }
+      }
+ 
+      if (multipartFiles.isEmpty) {
+        print("=== NO VALID FILES ===");
+        return {"status": "error", "uploaded": 0, "failed": files.length, "message": "No valid files to upload"};
+      }
+ 
+      print("=== SENDING ${multipartFiles.length} files to $url ===");
+      final FormData formData = FormData.fromMap({"files": multipartFiles, "type": type});
+ 
+      // ✅ imageApi — Image Service (port 8084)
+      final response = await imageApi.post(url, data: formData);
+      final statusCode = response.statusCode ?? 500;
+      print("=== RESPONSE STATUS: $statusCode ===");
+      print("=== RESPONSE DATA: ${response.data} ===");
+ 
+      if (statusCode == 200 || statusCode == 201) {
+        final dynamic rawData = response.data;
+        List<dynamic> uploadedList = [];
+        if (rawData is List) uploadedList = rawData;
+        else if (rawData is Map && rawData.containsKey('data')) uploadedList = rawData['data'] as List? ?? [];
+ 
         return {
-          'status': 'success',
-          'images': rawData,
+          "status": "success",
+          "uploaded": uploadedList.length,
+          "failed": files.length - uploadedList.length,
+          "responses": uploadedList,
         };
       }
-
-      return {'status': 'success', 'images': []};
+ 
+      final data = _parseData(response.data, statusCode: statusCode);
+      return {"status": "error", "uploaded": 0, "failed": files.length, ...data};
+    } catch (e, stack) {
+      print("=== UPLOAD EXCEPTION: $e ===");
+      print("=== STACK: $stack ===");
+      return {"status": "error", "uploaded": 0, "failed": files.length, "message": Constent.sometingWntWrong};
     }
-
-    // Error — parse as map
-    final data = _parseData(response.data, statusCode: statusCode);
-    return data;
-  } catch (e) {
-    return {'error': Constent.sometingWntWrong};
   }
-}
+ 
+  
 
   
+
+
+ 
 
 
 

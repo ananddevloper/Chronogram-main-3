@@ -96,7 +96,6 @@ class ApiService {
         }
       }
     }
-
     return map;
   }
 
